@@ -1,0 +1,141 @@
+package service
+
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+)
+
+type BaseConfig struct {
+	ServerType ServerType
+	ConfigName string
+	Version    string
+}
+
+type IBaseConfig interface {
+	GetVersionString() string
+	SetServerType(string)
+	GetServerType() ServerType
+	IsProductionServer() bool
+}
+
+func (c *BaseConfig) GetVersionString() string {
+	if c == nil {
+		return ""
+	} else {
+		return c.Version + "-" + c.ConfigName
+	}
+}
+
+func (c *BaseConfig) GetServerType() ServerType {
+	if c == nil {
+		return Development
+	} else {
+		return c.ServerType
+	}
+}
+
+func (c *BaseConfig) IsProductionServer() bool {
+	switch c.ServerType {
+	case Production, LiveTest:
+		return true
+	}
+
+	return false
+}
+
+func (c *BaseConfig) SetServerType(envServerType string) {
+	if c == nil {
+		return
+	}
+
+	switch envServerType {
+	case "production":
+		c.ServerType = Production
+	case "staging":
+		c.ServerType = Staging
+	case "livetest":
+		c.ServerType = LiveTest
+	default:
+		c.ServerType = Development
+	}
+}
+
+func ReadConfig(config interface{}, envServerType string, configPathBuilder func(string) string) error {
+	baseConfig, isBaseConfig := config.(IBaseConfig)
+	if isBaseConfig {
+		baseConfig.SetServerType(envServerType)
+	}
+
+	configPath := configPathBuilder("config.json")
+
+	var mergedConfig = make(map[string]interface{})
+	var overlayConfig = make(map[string]interface{})
+
+	//  Read base config for merging
+	if err := readConfigPath(configPath, &mergedConfig); err != nil {
+		return err
+	}
+
+	//  Merge specific configuration if applicable
+	var variantConfigPath string
+
+	switch baseConfig.GetServerType() {
+	case Staging:
+		variantConfigPath = "config-stage.json"
+	case Production:
+		variantConfigPath = "config-pro.json"
+	case Development:
+		variantConfigPath = "config-dev.json"
+	case LiveTest:
+		variantConfigPath = "config-livetest.json"
+	}
+
+	if err := readConfigPath(configPathBuilder(variantConfigPath), &overlayConfig); err != nil {
+		return err
+	}
+
+	//  Merge
+	for key, value := range overlayConfig {
+		if baseValue, ok := mergedConfig[key]; !ok {
+			//  Missing base key, add it
+			mergedConfig[key] = value
+		} else if baseMap, isMapBase := baseValue.(map[string]interface{}); !isMapBase {
+			//  Base config is not a map, overwrite with overlay value
+			mergedConfig[key] = value
+		} else if overlayMap, isMapOverlay := value.(map[string]interface{}); isMapBase && isMapOverlay {
+			//  Merge base and overlay map
+			for subKey, subValue := range overlayMap {
+				baseMap[subKey] = subValue
+			}
+		} else {
+			//  Base config is a map, overwrite with a non-map overlay value
+			mergedConfig[key] = value
+		}
+	}
+
+	//  Read the merged configuration to config struct, requires translating back and forth from json
+	var mergedJson []byte
+	var err error
+	if mergedJson, err = json.Marshal(mergedConfig); err == nil {
+		err = json.Unmarshal(mergedJson, config)
+	}
+
+	return err
+}
+
+func readConfigPath(path string, config interface{}) error {
+	file, err := os.Open(path)
+
+	if err != nil {
+		err = fmt.Errorf("ReadConfig path error: %v", err)
+		return err
+	}
+
+	decoder := json.NewDecoder(file)
+	err = decoder.Decode(config)
+
+	// Log.Debug.Printf("XXX READ CONFIG %v\n%+v", path, config)
+
+	return err
+}
