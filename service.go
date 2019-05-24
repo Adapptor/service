@@ -24,6 +24,7 @@ const (
 	Staging
 	Development
 	LiveTest
+	UAT
 )
 
 type LogType int

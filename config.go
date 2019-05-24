@@ -50,12 +50,14 @@ func (c *BaseConfig) SetServerType(envServerType string) {
 	}
 
 	switch envServerType {
-	case "production":
+	case "production", "prod":
 		c.ServerType = Production
 	case "staging":
 		c.ServerType = Staging
 	case "livetest":
 		c.ServerType = LiveTest
+	case "uat":
+		c.ServerType = UAT
 	default:
 		c.ServerType = Development
 	}
@@ -78,21 +80,29 @@ func ReadConfig(config interface{}, envServerType string, configPathBuilder func
 	}
 
 	//  Merge specific configuration if applicable
-	var variantConfigPath string
+	var variantConfigPaths []string
 
 	switch baseConfig.GetServerType() {
 	case Staging:
-		variantConfigPath = "config-stage.json"
+		variantConfigPaths = []string{"config-stage.json", "config-staging.json"}
 	case Production:
-		variantConfigPath = "config-pro.json"
+		variantConfigPaths = []string{"config-pro.json", "config-prod.json", "config-production.json"}
 	case Development:
-		variantConfigPath = "config-dev.json"
+		variantConfigPaths = []string{"config-dev.json", "config-development.json"}
+	case UAT:
+		variantConfigPaths = []string{"config-uat.json"}
 	case LiveTest:
-		variantConfigPath = "config-livetest.json"
+		variantConfigPaths = []string{"config-livetest.json"}
 	}
 
-	if err := readConfigPath(configPathBuilder(variantConfigPath), &overlayConfig); err != nil {
-		return err
+	var configReadError error
+	for _, variantConfigPath := range variantConfigPaths {
+		if configReadError = readConfigPath(configPathBuilder(variantConfigPath), &overlayConfig); configReadError == nil {
+			break
+		}
+	}
+	if configReadError != nil {
+		return configReadError
 	}
 
 	//  Merge
