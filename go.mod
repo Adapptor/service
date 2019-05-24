@@ -1,6 +1,7 @@
 module github.com/Adapptor/service
 
 require (
+	cloud.google.com/go v0.39.0
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/go-redis/redis v6.14.2+incompatible // indirect
 	github.com/golang/protobuf v1.2.0

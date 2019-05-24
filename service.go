@@ -62,6 +62,16 @@ func SetupLog(logfile string, minLogLevel LogType) *Logs {
 	return SetupLogWriters(logfile, []io.Writer{}, minLogLevel)
 }
 
+func SetupStackdriverLog(logfile string, cfg BaseConfig, minLogLevel LogType) (*Logs, error) {
+	stackdriverWriter, err := NewStackdriverWriter(cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	extraLogWriters := []io.Writer{stackdriverWriter}
+	return SetupLogWriters(logfile, extraLogWriters, minLogLevel), nil
+}
+
 func SetupLogWriters(logfile string, extraLogWriters []io.Writer, minLogLevel LogType) *Logs {
 	if Log == nil {
 		//  initialize with stderr logger
