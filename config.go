@@ -23,8 +23,6 @@ type IBaseConfig interface {
 	SetServerType(string)
 	GetServerType() ServerType
 	IsProductionServer() bool
-	GetGoogleProject() string
-	GetGoogleLogName() string
 }
 
 func (c *BaseConfig) GetVersionString() string {
@@ -69,14 +67,6 @@ func (c *BaseConfig) SetServerType(envServerType string) {
 	default:
 		c.ServerType = Development
 	}
-}
-
-func (c *BaseConfig) GetGoogleProject() string {
-	return c.Google.Project
-}
-
-func (c *BaseConfig) GetGoogleLogName() string {
-	return c.Google.LogName
 }
 
 func ReadConfig(config interface{}, envServerType string, configPathBuilder func(string) string) error {

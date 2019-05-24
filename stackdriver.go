@@ -30,21 +30,19 @@ var severityMap = map[string]logging.Severity{
 }
 
 func NewStackdriverWriter(cfg BaseConfig) (*StackdriverWriter, error) {
-	googleLogName := cfg.GetGoogleLogName()
-	if len(googleLogName) < 1 {
+	if len(cfg.Google.LogName) < 1 {
 		return nil, errors.New("Google log name not configured")
 	}
 
-	googleProject := cfg.GetGoogleProject()
-	if len(googleProject) < 1 {
+	if len(cfg.Google.Project) < 1 {
 		return nil, errors.New("Google project name not configured")
 	}
 
 	ctx := context.Background()
 
-	logName := fmt.Sprintf("%v-%v", googleLogName, cfg.ConfigName)
+	logName := fmt.Sprintf("%v-%v", cfg.Google.LogName, cfg.ConfigName)
 	// Creates a client.
-	client, err := logging.NewClient(ctx, googleProject)
+	client, err := logging.NewClient(ctx, cfg.Google.Project)
 	if err != nil {
 		return nil, err
 	}
