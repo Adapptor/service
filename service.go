@@ -6,7 +6,6 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"io/ioutil"
 	"log"
@@ -15,6 +14,8 @@ import (
 	"os"
 	"strings"
 	"time"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type ServerType int
@@ -27,6 +28,10 @@ const (
 	UAT
 )
 
+func (s ServerType) String() string {
+	return [...]string{"Production", "Staging", "Development", "LiveTest", "UAT"}[s]
+}
+
 type LogType int
 
 const (
@@ -36,6 +41,10 @@ const (
 	Warning
 	Error
 )
+
+func (l LogType) String() string {
+	return [...]string{"Trace", "Debug", "Info", "Warning", "Error"}[l]
+}
 
 type Logs struct {
 	Trace   *log.Logger
@@ -127,6 +136,26 @@ func setupTempLog() *Logs {
 	}
 
 	return &logs
+}
+
+// GetLogger Get the LogType that matches the given log level string.
+// Defaults to Info.
+func GetLogType(logLevel string) LogType {
+
+	switch strings.ToLower(logLevel) {
+	case "trace":
+		return Trace
+	case "debug":
+		return Debug
+	case "info":
+		return Info
+	case "warning":
+		return Warning
+	case "error":
+		return Error
+	default:
+		return Info
+	}
 }
 
 type Map map[string]interface{}

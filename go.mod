@@ -9,4 +9,5 @@ require (
 	gopkg.in/bsm/ratelimit.v1 v1.0.0-20160220154919-db14e161995a // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 	gopkg.in/redis.v3 v3.6.4
+	gopkg.in/yaml.v2 v2.2.2 // indirect
 )
