@@ -6,10 +6,16 @@ import (
 	"os"
 )
 
+type GoogleConfig struct {
+	Project string
+	LogName string
+}
+
 type BaseConfig struct {
 	ServerType ServerType
 	ConfigName string
 	Version    string
+	Google     GoogleConfig
 }
 
 type IBaseConfig interface {
