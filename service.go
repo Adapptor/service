@@ -131,7 +131,7 @@ func (m *Map) GetString(key string) string {
 	return vstr
 }
 
-func (m *Map) ReadJsonMap(reader io.Reader) (Map, error) {
+func ReadJsonMap(reader io.Reader) (Map, error) {
 	decoder := json.NewDecoder(reader)
 	var body Map
 	err := decoder.Decode(&body)
