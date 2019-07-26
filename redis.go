@@ -135,6 +135,15 @@ func (r *Redis) CacheJson(key string, value interface{}, expiry time.Duration) {
 	}
 }
 
+// Read a protocol buffer from the cache
+func (r *Redis) ReadJson(key string, result interface{}) error {
+	data, err := r.Get(key).Bytes()
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(data, result)
+}
+
 type CacheWriter struct {
 	key    string
 	redis  *redis.Client
