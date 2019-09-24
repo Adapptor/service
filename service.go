@@ -54,6 +54,18 @@ type Logs struct {
 	Error   *log.Logger
 }
 
+var logTypeStringMap = map[string]LogType{
+	"Trace":   Trace,
+	"Debug":   Debug,
+	"Info":    Info,
+	"Warning": Warning,
+	"Error":   Error,
+}
+
+func LogTypeFromString(level string) LogType {
+	return logTypeStringMap[level]
+}
+
 func LogDump(logger *log.Logger, obj interface{}) {
 	js, _ := json.Marshal(obj)
 	logger.Printf("%v", string(js))
