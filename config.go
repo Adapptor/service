@@ -102,8 +102,15 @@ func ReadConfig(config interface{}, envServerType string, configPathBuilder func
 	}
 
 	var configReadError error
-	for _, variantConfigPath := range variantConfigPaths {
-		if configReadError = readConfigPath(configPathBuilder(variantConfigPath), &overlayConfig); configReadError == nil {
+	for _, variantConfigFile := range variantConfigPaths {
+		variantConfigPath := configPathBuilder(variantConfigFile)
+
+		if _, err := os.Stat(variantConfigPath); os.IsNotExist(err) {
+			//  Skip if missing
+			continue
+		}
+
+		if configReadError = readConfigPath(variantConfigPath, &overlayConfig); configReadError == nil {
 			break
 		}
 	}
@@ -111,7 +118,13 @@ func ReadConfig(config interface{}, envServerType string, configPathBuilder func
 		return configReadError
 	}
 
-	//  Merge
+	//  No variant configuration to overlay, just use base configuration
+	if len(overlayConfig) == 0 {
+		config = &mergedConfig
+		return nil
+	}
+
+	//  Otherwise merge
 	for key, value := range overlayConfig {
 		if baseValue, ok := mergedConfig[key]; !ok {
 			//  Missing base key, add it
