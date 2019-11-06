@@ -118,28 +118,24 @@ func ReadConfig(config interface{}, envServerType string, configPathBuilder func
 		return configReadError
 	}
 
-	//  No variant configuration to overlay, just use base configuration
-	if len(overlayConfig) == 0 {
-		config = &mergedConfig
-		return nil
-	}
-
-	//  Otherwise merge
-	for key, value := range overlayConfig {
-		if baseValue, ok := mergedConfig[key]; !ok {
-			//  Missing base key, add it
-			mergedConfig[key] = value
-		} else if baseMap, isMapBase := baseValue.(map[string]interface{}); !isMapBase {
-			//  Base config is not a map, overwrite with overlay value
-			mergedConfig[key] = value
-		} else if overlayMap, isMapOverlay := value.(map[string]interface{}); isMapBase && isMapOverlay {
-			//  Merge base and overlay map
-			for subKey, subValue := range overlayMap {
-				baseMap[subKey] = subValue
+	//  Merge an overlay configuration with the base configuration if present
+	if len(overlayConfig) > 0 {
+		for key, value := range overlayConfig {
+			if baseValue, ok := mergedConfig[key]; !ok {
+				//  Missing base key, add it
+				mergedConfig[key] = value
+			} else if baseMap, isMapBase := baseValue.(map[string]interface{}); !isMapBase {
+				//  Base config is not a map, overwrite with overlay value
+				mergedConfig[key] = value
+			} else if overlayMap, isMapOverlay := value.(map[string]interface{}); isMapBase && isMapOverlay {
+				//  Merge base and overlay map
+				for subKey, subValue := range overlayMap {
+					baseMap[subKey] = subValue
+				}
+			} else {
+				//  Base config is a map, overwrite with a non-map overlay value
+				mergedConfig[key] = value
 			}
-		} else {
-			//  Base config is a map, overwrite with a non-map overlay value
-			mergedConfig[key] = value
 		}
 	}
 
