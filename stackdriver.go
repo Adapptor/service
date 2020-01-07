@@ -1,13 +1,15 @@
 package service
 
 import (
-	"cloud.google.com/go/logging"
 	"context"
 	"errors"
 	"fmt"
 	"io"
 	"strings"
 	"sync"
+
+	"cloud.google.com/go/logging"
+	"google.golang.org/api/option"
 )
 
 // ensure we always implement io.WriteCloser
@@ -29,7 +31,7 @@ var severityMap = map[string]logging.Severity{
 	"ERROR":   logging.Error,
 }
 
-func NewStackdriverWriter(cfg BaseConfig) (*StackdriverWriter, error) {
+func NewStackdriverWriter(cfg BaseConfig, opts ...option.ClientOption) (*StackdriverWriter, error) {
 	if len(cfg.Google.LogName) < 1 {
 		return nil, errors.New("Google log name not configured")
 	}
@@ -42,7 +44,7 @@ func NewStackdriverWriter(cfg BaseConfig) (*StackdriverWriter, error) {
 
 	logName := fmt.Sprintf("%v-%v", cfg.Google.LogName, cfg.ConfigName)
 	// Creates a client.
-	client, err := logging.NewClient(ctx, cfg.Google.Project)
+	client, err := logging.NewClient(ctx, cfg.Google.Project, opts...)
 	if err != nil {
 		return nil, err
 	}
