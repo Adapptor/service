@@ -15,6 +15,7 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/api/option"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
@@ -83,8 +84,8 @@ func SetupLog(logfile string, minLogLevel LogType) *Logs {
 	return SetupLogWriters(logfile, []io.Writer{}, minLogLevel)
 }
 
-func SetupStackdriverLog(logfile string, cfg BaseConfig, minLogLevel LogType) (*Logs, error) {
-	stackdriverWriter, err := NewStackdriverWriter(cfg)
+func SetupStackdriverLog(logfile string, cfg BaseConfig, minLogLevel LogType, opts ...option.ClientOption) (*Logs, error) {
+	stackdriverWriter, err := NewStackdriverWriter(cfg, opts...)
 	if err != nil {
 		return nil, err
 	}
