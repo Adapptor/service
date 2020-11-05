@@ -58,7 +58,7 @@ func (c *BaseConfig) SetServerType(envServerType string) {
 	switch envServerType {
 	case "production", "prod":
 		c.ServerType = Production
-	case "staging":
+	case "staging", "stage":
 		c.ServerType = Staging
 	case "livetest":
 		c.ServerType = LiveTest
