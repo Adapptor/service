@@ -3,12 +3,13 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/golang/protobuf/proto"
-	"gopkg.in/redis.v3"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"google.golang.org/protobuf/proto"
+	"gopkg.in/redis.v3"
 )
 
 type Redis struct {

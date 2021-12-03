@@ -3,9 +3,10 @@ package service
 import (
 	"encoding/json"
 	"fmt"
-	jwt "github.com/dgrijalva/jwt-go"
 	"io/ioutil"
 	_ "time"
+
+	jwt "github.com/golang-jwt/jwt"
 )
 
 type GoogleCredentials struct {
