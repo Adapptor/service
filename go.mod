@@ -2,8 +2,8 @@ module github.com/Adapptor/service
 
 require (
 	cloud.google.com/go v0.39.0
-	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/garyburd/redigo v1.6.3 // indirect
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/onsi/ginkgo v1.16.5 // indirect
 	github.com/onsi/gomega v1.17.0 // indirect
 	google.golang.org/api v0.5.0
