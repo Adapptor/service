@@ -1,10 +1,11 @@
-//  Adapptor helpers for writing web services
+// Adapptor helpers for writing web services
 package service
 
 import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -151,6 +152,85 @@ func setupTempLog() *Logs {
 	return &logs
 }
 
+func SwitchLogLevel(logfile string, minLogLevel string) (LogType, error) {
+	// validate log level
+	minLogLevelType, err := validateLogType(minLogLevel)
+	if err != nil {
+		return minLogLevelType, err
+	}
+
+	if Log == nil {
+		//  initialize logger
+		SetupLogWriters(logfile, []io.Writer{}, minLogLevelType)
+		return minLogLevelType, nil
+	}
+
+	var levelWriter = Log.Error.Writer()
+
+	switch minLogLevelType {
+	case Trace:
+		setLoggers(Trace, levelWriter)
+	case Debug:
+		Log.Trace.SetOutput(io.Discard)
+		setLoggers(Debug, levelWriter)
+	case Info:
+		Log.Trace.SetOutput(io.Discard)
+		Log.Debug.SetOutput(io.Discard)
+		setLoggers(Info, levelWriter)
+	case Warning:
+		Log.Trace.SetOutput(io.Discard)
+		Log.Debug.SetOutput(io.Discard)
+		Log.Info.SetOutput(io.Discard)
+		setLoggers(Warning, levelWriter)
+	case Error:
+		Log.Trace.SetOutput(io.Discard)
+		Log.Debug.SetOutput(io.Discard)
+		Log.Info.SetOutput(io.Discard)
+		Log.Warning.SetOutput(io.Discard)
+	}
+
+	return minLogLevelType, nil
+}
+
+func setLoggers(logType LogType, levelWriter io.Writer) {
+	logs := []LogType{}
+	if logType == Warning || logType == Info || logType == Debug || logType == Trace {
+		if Log.Warning.Writer() == io.Discard {
+			logs = append(logs, Warning)
+		}
+
+		if logType == Info || logType == Debug || logType == Trace {
+			if Log.Info.Writer() == io.Discard {
+				logs = append(logs, Info)
+			}
+		}
+
+		if logType == Debug || logType == Trace {
+			if Log.Debug.Writer() == io.Discard {
+				logs = append(logs, Debug)
+			}
+		}
+
+		if logType == Trace {
+			if Log.Trace.Writer() == io.Discard {
+				logs = append(logs, Trace)
+			}
+		}
+	}
+
+	if len(logs) != 0 {
+		setLoggerWriter(logs, levelWriter)
+	}
+}
+
+func setLoggerWriter(logTypes []LogType, levelWriter io.Writer) {
+	for _, logType := range logTypes {
+		logLevelInfo := logLevelMap[logType]
+		var logger **log.Logger = logLevelInfo.Logger
+		*logger = log.New(levelWriter, fmt.Sprintf("%v: ", logLevelInfo.Tag), log.Ldate|log.Ltime|log.Lshortfile)
+	}
+}
+
 // GetLogger Get the LogType that matches the given log level string.
 // Defaults to Info.
 func GetLogType(logLevel string) LogType {
@@ -169,6 +249,16 @@ func GetLogType(logLevel string) LogType {
 	default:
 		return Info
 	}
+}
+
+// validateLogType Gets the log level and checks if it's valid
+// Defaults if the log level type has defaulted to info and if it is valid
+func validateLogType(logLevel string) (LogType, error) {
+	logLevelType := GetLogType(logLevel)
+	if logLevelType != Info || strings.EqualFold(logLevel, logLevelType.String()) {
+		return logLevelType, nil
+	}
+	return logLevelType, errors.New("invalid log level")
 }
 
 type Map map[string]interface{}
@@ -347,7 +437,7 @@ func ParseProtoTime(timeStr string) (time.Time, error) {
 	return date, nil
 }
 
-//  Log contents of a reader
+// Log contents of a reader
 func LogReader(logType LogType, reader io.Reader, prefix string) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(reader)
@@ -377,7 +467,7 @@ func NewHttpClient(timeout time.Duration, insecureSkipVerify bool) http.Client {
 	return client
 }
 
-//  Integer min/max
+// Integer min/max
 func Min(x, y int32) int32 {
 	if x < y {
 		return x
