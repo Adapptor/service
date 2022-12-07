@@ -80,6 +80,8 @@ type LogLevelInfo struct {
 
 var Log *Logs
 var logLevelMap map[LogType]LogLevelInfo
+var extraLogLevelWriters []io.Writer
+var fileLogWriter *lumberjack.Logger
 
 func SetupLog(logfile string, minLogLevel LogType) *Logs {
 	return SetupLogWriters(logfile, []io.Writer{}, minLogLevel)
@@ -109,47 +111,18 @@ func SetupLogWriters(logfile string, extraLogWriters []io.Writer, minLogLevel Lo
 		Error:   {&Log.Error, "ERROR"},
 	}
 
-	fileLogWriter := &lumberjack.Logger{
+	fileLogWriter = &lumberjack.Logger{
 		Filename:   logfile,
 		MaxSize:    500,
 		MaxBackups: 3,
 		MaxAge:     28,
 	}
 
-	//  Combine log writer streams
-	logWriters := []io.Writer{os.Stderr, fileLogWriter}
-	logWriters = append(logWriters, extraLogWriters...)
-	logWriter := io.MultiWriter(logWriters...)
+	extraLogLevelWriters = extraLogWriters
 
-	for _, logType := range []LogType{Trace, Debug, Info, Warning, Error} {
-		var levelWriter *io.Writer
-		if logType >= minLogLevel {
-			levelWriter = &logWriter
-		} else {
-			levelWriter = &ioutil.Discard
-		}
-
-		logLevelInfo := logLevelMap[logType]
-		var logger **log.Logger = logLevelInfo.Logger
-		*logger = log.New(*levelWriter, fmt.Sprintf("%v: ", logLevelInfo.Tag), log.Ldate|log.Ltime|log.Lshortfile)
-	}
+	setLogLevel(minLogLevel)
 
 	return Log
-}
-
-func setupTempLog() *Logs {
-	//  Set up a temporary logger to stdout while loading config
-	tempLogger := log.New(os.Stderr, "INIT: ", log.Ldate|log.Ltime|log.Lshortfile)
-
-	logs := Logs{
-		Trace:   tempLogger,
-		Debug:   tempLogger,
-		Info:    tempLogger,
-		Warning: tempLogger,
-		Error:   tempLogger,
-	}
-
-	return &logs
 }
 
 func SwitchLogLevel(logfile string, minLogLevel string) (LogType, error) {
@@ -165,70 +138,44 @@ func SwitchLogLevel(logfile string, minLogLevel string) (LogType, error) {
 		return minLogLevelType, nil
 	}
 
-	var levelWriter = Log.Error.Writer()
-
-	switch minLogLevelType {
-	case Trace:
-		setLoggers(Trace, levelWriter)
-	case Debug:
-		Log.Trace.SetOutput(io.Discard)
-		setLoggers(Debug, levelWriter)
-	case Info:
-		Log.Trace.SetOutput(io.Discard)
-		Log.Debug.SetOutput(io.Discard)
-		setLoggers(Info, levelWriter)
-	case Warning:
-		Log.Trace.SetOutput(io.Discard)
-		Log.Debug.SetOutput(io.Discard)
-		Log.Info.SetOutput(io.Discard)
-		setLoggers(Warning, levelWriter)
-	case Error:
-		Log.Trace.SetOutput(io.Discard)
-		Log.Debug.SetOutput(io.Discard)
-		Log.Info.SetOutput(io.Discard)
-		Log.Warning.SetOutput(io.Discard)
-	}
+	setLogLevel(minLogLevelType)
 
 	return minLogLevelType, nil
 }
 
-func setLoggers(logType LogType, levelWriter io.Writer) {
-	logs := []LogType{}
-	if logType == Warning || logType == Info || logType == Debug || logType == Trace {
-		if Log.Warning.Writer() == io.Discard {
-			logs = append(logs, Warning)
+func setLogLevel(minLogLevel LogType) {
+	//  Combine log writer streams
+	logWriters := []io.Writer{os.Stderr, fileLogWriter}
+	logWriters = append(logWriters, extraLogLevelWriters...)
+	logWriter := io.MultiWriter(logWriters...)
+
+	for _, logType := range []LogType{Trace, Debug, Info, Warning, Error} {
+		var levelWriter *io.Writer
+		if logType >= minLogLevel {
+			levelWriter = &logWriter
+		} else {
+			levelWriter = &ioutil.Discard
 		}
 
-		if logType == Info || logType == Debug || logType == Trace {
-			if Log.Info.Writer() == io.Discard {
-				logs = append(logs, Info)
-			}
-		}
-
-		if logType == Debug || logType == Trace {
-			if Log.Debug.Writer() == io.Discard {
-				logs = append(logs, Debug)
-			}
-		}
-
-		if logType == Trace {
-			if Log.Trace.Writer() == io.Discard {
-				logs = append(logs, Trace)
-			}
-		}
-	}
-
-	if len(logs) != 0 {
-		setLoggerWriter(logs, levelWriter)
+		logLevelInfo := logLevelMap[logType]
+		var logger **log.Logger = logLevelInfo.Logger
+		*logger = log.New(*levelWriter, fmt.Sprintf("%v: ", logLevelInfo.Tag), log.Ldate|log.Ltime|log.Lshortfile)
 	}
 }
 
-func setLoggerWriter(logTypes []LogType, levelWriter io.Writer) {
-	for _, logType := range logTypes {
-		logLevelInfo := logLevelMap[logType]
-		var logger **log.Logger = logLevelInfo.Logger
-		*logger = log.New(levelWriter, fmt.Sprintf("%v: ", logLevelInfo.Tag), log.Ldate|log.Ltime|log.Lshortfile)
+func setupTempLog() *Logs {
+	//  Set up a temporary logger to stdout while loading config
+	tempLogger := log.New(os.Stderr, "INIT: ", log.Ldate|log.Ltime|log.Lshortfile)
+
+	logs := Logs{
+		Trace:   tempLogger,
+		Debug:   tempLogger,
+		Info:    tempLogger,
+		Warning: tempLogger,
+		Error:   tempLogger,
 	}
+
+	return &logs
 }
 
 // GetLogger Get the LogType that matches the given log level string.
