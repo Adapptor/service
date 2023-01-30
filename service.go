@@ -1,10 +1,11 @@
-//  Adapptor helpers for writing web services
+// Adapptor helpers for writing web services
 package service
 
 import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -79,6 +80,8 @@ type LogLevelInfo struct {
 
 var Log *Logs
 var logLevelMap map[LogType]LogLevelInfo
+var extraLogLevelWriters []io.Writer
+var fileLogWriter *lumberjack.Logger
 
 func SetupLog(logfile string, minLogLevel LogType) *Logs {
 	return SetupLogWriters(logfile, []io.Writer{}, minLogLevel)
@@ -108,16 +111,42 @@ func SetupLogWriters(logfile string, extraLogWriters []io.Writer, minLogLevel Lo
 		Error:   {&Log.Error, "ERROR"},
 	}
 
-	fileLogWriter := &lumberjack.Logger{
+	fileLogWriter = &lumberjack.Logger{
 		Filename:   logfile,
 		MaxSize:    500,
 		MaxBackups: 3,
 		MaxAge:     28,
 	}
 
+	extraLogLevelWriters = extraLogWriters
+
+	setLogLevel(minLogLevel)
+
+	return Log
+}
+
+func SwitchLogLevel(logfile string, minLogLevel string) (LogType, error) {
+	// validate log level
+	minLogLevelType, err := validateLogType(minLogLevel)
+	if err != nil {
+		return minLogLevelType, err
+	}
+
+	if Log == nil {
+		//  initialize logger
+		SetupLogWriters(logfile, []io.Writer{}, minLogLevelType)
+		return minLogLevelType, nil
+	}
+
+	setLogLevel(minLogLevelType)
+
+	return minLogLevelType, nil
+}
+
+func setLogLevel(minLogLevel LogType) {
 	//  Combine log writer streams
 	logWriters := []io.Writer{os.Stderr, fileLogWriter}
-	logWriters = append(logWriters, extraLogWriters...)
+	logWriters = append(logWriters, extraLogLevelWriters...)
 	logWriter := io.MultiWriter(logWriters...)
 
 	for _, logType := range []LogType{Trace, Debug, Info, Warning, Error} {
@@ -132,8 +161,6 @@ func SetupLogWriters(logfile string, extraLogWriters []io.Writer, minLogLevel Lo
 		var logger **log.Logger = logLevelInfo.Logger
 		*logger = log.New(*levelWriter, fmt.Sprintf("%v: ", logLevelInfo.Tag), log.Ldate|log.Ltime|log.Lshortfile)
 	}
-
-	return Log
 }
 
 func setupTempLog() *Logs {
@@ -169,6 +196,16 @@ func GetLogType(logLevel string) LogType {
 	default:
 		return Info
 	}
+}
+
+// validateLogType Gets the log level and checks if it's valid
+// Defaults if the log level type has defaulted to info and if it is valid
+func validateLogType(logLevel string) (LogType, error) {
+	logLevelType := GetLogType(logLevel)
+	if logLevelType != Info || strings.EqualFold(logLevel, logLevelType.String()) {
+		return logLevelType, nil
+	}
+	return logLevelType, errors.New("invalid log level")
 }
 
 type Map map[string]interface{}
@@ -347,7 +384,7 @@ func ParseProtoTime(timeStr string) (time.Time, error) {
 	return date, nil
 }
 
-//  Log contents of a reader
+// Log contents of a reader
 func LogReader(logType LogType, reader io.Reader, prefix string) {
 	buf := new(bytes.Buffer)
 	buf.ReadFrom(reader)
@@ -377,7 +414,7 @@ func NewHttpClient(timeout time.Duration, insecureSkipVerify bool) http.Client {
 	return client
 }
 
-//  Integer min/max
+// Integer min/max
 func Min(x, y int32) int32 {
 	if x < y {
 		return x
