@@ -64,6 +64,8 @@ func (c *BaseConfig) SetServerType(envServerType string) {
 		c.ServerType = LiveTest
 	case "uat":
 		c.ServerType = UAT
+	case "local":
+		c.ServerType = Local
 	default:
 		c.ServerType = Development
 	}
@@ -99,6 +101,8 @@ func ReadConfig(config interface{}, envServerType string, configPathBuilder func
 		variantConfigPaths = []string{"config-uat.json"}
 	case LiveTest:
 		variantConfigPaths = []string{"config-livetest.json"}
+	case Local:
+		variantConfigPaths = []string{"config-local.json"}
 	}
 
 	var configReadError error
