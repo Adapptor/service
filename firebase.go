@@ -39,48 +39,9 @@ func ReadGoogleAuth(path string) (GoogleCredentials, error) {
 func ParseFirebaseToken(tokenString, secret string) (*jwt.Token, error) {
 	return jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
-			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
 		return []byte(secret), nil
 	})
 }
-
-// func GenerateFirebaseToken(serviceAccountEmail, privateKey string, claims jwt.MapClaims) {
-//
-// 	now := time.Now()
-//
-// 	expiry := now.Unix() + 60*60
-// 	firebaseUid := "dacff6cc-507b-4ab8-8d3c-5f90b8f5b34e"
-//
-// 	payload := jwt.MapClaims{
-// 		"nbf": now.Unix(),
-// 		"iss": serviceAccountEmail,
-// 		"sub": serviceAccountEmail,
-// 		"aud": "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit",
-// 		"iat": now.Unix(),
-// 		// XXX EXPIRY
-// 		"exp": expiry,
-// 		"uid": firebaseUid,
-// 	}
-//
-// 	token := jwt.NewWithClaims(jwt.SigningMethodRS256, claims)
-//
-// 	// // Sign and get the complete encoded token as a string using the secret
-// 	// tokenString, err := token.SignedString(hmacSampleSecret)
-//
-// 	// fmt.Println(tokenString, err)
-//
-// 	// $payload = array(
-// 	//   "iss" => $service_account_email,
-// 	//   "sub" => $service_account_email,
-// 	//   "aud" => "https://identitytoolkit.googleapis.com/google.identity.identitytoolkit.v1.IdentityToolkit",
-// 	//   "iat" => $now_seconds,
-// 	//   "exp" => $now_seconds+(60*60),  // Maximum expiration time is one hour
-// 	//   "uid" => $uid,
-// 	//   "claims" => array(
-// 	//     "premium_account" => $is_premium_account
-// 	//   )
-// 	// return JWT::encode($payload, $private_key, "RS256");
-//
-// }
