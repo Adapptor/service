@@ -18,9 +18,10 @@ const (
 
 // All log levels
 var LogLevels = [...]LogLevel{Trace, Debug, Info, Warning, Error}
+var LogLevelStrings = [...]string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"}
 
 func (l LogLevel) String() string {
-	return [...]string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"}[l]
+	return LogLevelStrings[l]
 }
 
 // GetLogger Get the LogLevel that matches the given log level string.
