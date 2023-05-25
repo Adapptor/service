@@ -8,7 +8,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/Adapptor/service/log"
+	"github.com/Adapptor/service/v2/log"
 
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/redis.v3"

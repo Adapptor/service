@@ -4,7 +4,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/Adapptor/service/log"
+	"github.com/Adapptor/service/v2/log"
 )
 
 // Integer min/max
