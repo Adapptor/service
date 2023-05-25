@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Adapptor/service/log"
+
 	"google.golang.org/protobuf/proto"
 	"gopkg.in/redis.v3"
 )
@@ -16,12 +18,13 @@ type Redis struct {
 	*redis.Client
 }
 
-//  Delete all Redis keys with a given prefix wildcard, e.g. "data:*"
+// Delete all Redis keys with a given prefix wildcard, e.g. "data:*"
 func (r *Redis) DeleteKeysPrefix(prefix string) (interface{}, error) {
 	script := "return redis.call('del', unpack(redis.call('keys', ARGV[1])))"
 	return r.Eval(script, []string{}, []string{prefix}).Result()
 }
 
+// KeyCount returns the number of keys that match the specified Redis pattern.
 func (r *Redis) KeyCount(pattern string) int {
 	var cursor int64
 	var n int
@@ -97,7 +100,6 @@ func (r *Redis) WriteProtobufKey(w http.ResponseWriter, key string, obj proto.Me
 	return err
 }
 
-// j
 func (r *Redis) WriteCacheProtobufMessage(w http.ResponseWriter, obj proto.Message, cacheKey string, expiry time.Duration, useJson bool) {
 	msg, _ := proto.Marshal(obj)
 	r.Set(cacheKey, msg, expiry)
@@ -127,7 +129,7 @@ func (r *Redis) GetProtobufKey(key string, obj proto.Message) error {
 func (r *Redis) CacheJson(key string, value interface{}, expiry time.Duration) {
 	jsonData, err := json.Marshal(value)
 	if err != nil {
-		Log.Error.Printf("Error marshalling to cache: %v", err)
+		log.Log(log.Error, "Error marshalling to cache", err, nil)
 	} else {
 		r.Set(key, string(jsonData[:]), 0)
 		if expiry > 0 {
@@ -164,7 +166,7 @@ func (cw CacheWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-//  Returns a Writer that will output to a Redis key
+// Returns a Writer that will output to a Redis key
 func (r *Redis) CacheKeyWriter(key string, expiry time.Duration) io.Writer {
 	cw := CacheWriter{key: key, redis: r.Client, expiry: expiry}
 	r.Set(key, "", expiry)

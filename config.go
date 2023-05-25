@@ -16,6 +16,7 @@ type BaseConfig struct {
 	ConfigName string
 	Version    string
 	Google     GoogleConfig
+	SentryDsn  *string
 }
 
 type IBaseConfig interface {
@@ -39,6 +40,13 @@ func (c *BaseConfig) GetServerType() ServerType {
 	} else {
 		return c.ServerType
 	}
+}
+
+func (c *BaseConfig) GetSentryDsn() *string {
+	if c == nil {
+		return nil
+	}
+	return c.SentryDsn
 }
 
 func (c *BaseConfig) IsProductionServer() bool {
@@ -163,8 +171,6 @@ func readConfigPath(path string, config interface{}) error {
 
 	decoder := json.NewDecoder(file)
 	err = decoder.Decode(config)
-
-	// Log.Debug.Printf("XXX READ CONFIG %v\n%+v", path, config)
 
 	return err
 }
