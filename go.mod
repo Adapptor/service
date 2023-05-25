@@ -1,4 +1,4 @@
-module github.com/Adapptor/service
+module github.com/Adapptor/service/v2
 
 require (
 	cloud.google.com/go v0.39.0

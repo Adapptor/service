@@ -7,7 +7,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/Adapptor/service/log"
+	"github.com/Adapptor/service/v2/log"
 )
 
 type Map map[string]interface{}
