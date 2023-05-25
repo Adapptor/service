@@ -91,7 +91,7 @@ func (sw *StackdriverWriter) Close() error {
 	return sw.Client.Close()
 }
 
-// deprecated
+// Deprecated
 var severityMap = map[string]logging.Severity{
 	"TRACE":   DropLog,
 	"DEBUG":   logging.Debug,
@@ -100,7 +100,7 @@ var severityMap = map[string]logging.Severity{
 	"ERROR":   logging.Error,
 }
 
-// deprecated; use Log(...)
+// Deprecated: use Log(...)
 func (sw *StackdriverWriter) Write(p []byte) (n int, err error) {
 	sw.mu.Lock()
 	defer sw.mu.Unlock()

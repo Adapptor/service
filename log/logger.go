@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// Singleton LogSet
+// Singleton LoggerSet
 var loggerSet = NewLoggerSet(Info)
 
 // A public reference to the singleton LogSet if required for injection
@@ -59,7 +59,8 @@ func LogReader(level LogLevel, reader io.Reader, prefix string) {
 }
 
 // Add a file logger with the given file name
-// deprecated; use NewFileLogger instead
+//
+// Deprecated: use NewFileLogger instead
 func SetupLog(logfile string, minLogLevel LogLevel) Logger {
 	fileLogger := NewFileLogger(logfile, minLogLevel, 500, 3, 28)
 	loggerSet.AddLogger(fileLogger)
@@ -67,7 +68,8 @@ func SetupLog(logfile string, minLogLevel LogLevel) Logger {
 }
 
 // Write the given JSON object to the standard log
-// deprecated; use Log instead
+//
+// Deprecated: use Log instead
 func LogDump(logger *log.Logger, obj interface{}) {
 	js, _ := json.Marshal(obj)
 	log.Printf("%v\n", string(js))
