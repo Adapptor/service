@@ -12,7 +12,16 @@ type LoggerThatClosesWithError struct {
 }
 
 func (l *LoggerThatClosesWithError) SetMinimumLevel(logLevel LogLevel) {}
+func (l *LoggerThatClosesWithError) GetMinimumLevel() LogLevel {
+	return Debug
+}
+func (l *LoggerThatClosesWithError) SetUserPropertiesToLog(userPropertiesToLog *[]UserProperty) {}
+func (l *LoggerThatClosesWithError) GetUserPropertiesToLog() *[]UserProperty                    { return nil }
 func (l *LoggerThatClosesWithError) Log(level LogLevel, message string, err error, ctx context.Context) {
+}
+func (l *LoggerThatClosesWithError) Logf(level LogLevel, err error, ctx context.Context, format string, args ...interface{}) {
+}
+func (l *LoggerThatClosesWithError) Logln(level LogLevel, err error, ctx context.Context, args ...interface{}) {
 }
 func (l *LoggerThatClosesWithError) Close(timeout time.Duration) error {
 	// Sleep for half the timeout, then error

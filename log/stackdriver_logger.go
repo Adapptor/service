@@ -20,8 +20,8 @@ type StackdriverWriter struct {
 	Logger *logging.Logger
 	mu     sync.Mutex
 
-	// Logger interface
-	minimumLevel LogLevel
+	minimumLevel        LogLevel
+	userPropertiesToLog *[]UserProperty
 }
 
 const DropLog = logging.Severity(-1)
@@ -61,34 +61,61 @@ func NewStackdriverWriter(configName string, googleLogName string, googleProject
 	}, nil
 }
 
-func (sw *StackdriverWriter) Flush() {
-	sw.Logger.Flush()
+func (l *StackdriverWriter) Flush() {
+	l.Logger.Flush()
 }
 
-func (sw *StackdriverWriter) SetMinimumLevel(level LogLevel) {
-	sw.minimumLevel = level
+func (l *StackdriverWriter) SetMinimumLevel(level LogLevel) {
+	l.minimumLevel = level
 }
 
-func (sw *StackdriverWriter) Log(level LogLevel, message string, err error, ctx context.Context) {
-	sw.mu.Lock()
-	defer sw.mu.Unlock()
+func (l *StackdriverWriter) GetMinimumLevel() LogLevel {
+	return l.minimumLevel
+}
 
-	if level >= sw.minimumLevel {
-		if err == nil {
-			sw.Logger.Log(logging.Entry{Severity: logLevelToStackDriverSeverity[level], Payload: fmt.Sprintf("%v", message)})
-		} else {
-			sw.Logger.Log(logging.Entry{Severity: logLevelToStackDriverSeverity[level], Payload: fmt.Sprintf("%v, %+v", message, err)})
+func (l *StackdriverWriter) SetUserPropertiesToLog(userPropertiesToLog *[]UserProperty) {
+	l.userPropertiesToLog = userPropertiesToLog
+}
+
+func (l *StackdriverWriter) GetUserPropertiesToLog() *[]UserProperty { return l.userPropertiesToLog }
+
+func (l *StackdriverWriter) Log(level LogLevel, message string, err error, ctx context.Context) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if level >= l.minimumLevel {
+		userProperties := GetUserPropertiesString(ctx, l.userPropertiesToLog)
+		if userProperties != nil {
+			message = fmt.Sprintf("%s (%s)", message, *userProperties)
 		}
+
+		if err == nil {
+			l.Logger.Log(logging.Entry{Severity: logLevelToStackDriverSeverity[level], Payload: fmt.Sprintf("%v", message)})
+		} else {
+			l.Logger.Log(logging.Entry{Severity: logLevelToStackDriverSeverity[level], Payload: fmt.Sprintf("%v, %+v", message, err)})
+		}
+	}
+}
+
+func (l *StackdriverWriter) Logf(level LogLevel, err error, ctx context.Context, format string, args ...interface{}) {
+	if level >= l.minimumLevel {
+		l.Log(level, fmt.Sprintf(format, args...), err, ctx)
+	}
+}
+
+func (l *StackdriverWriter) Logln(level LogLevel, err error, ctx context.Context, args ...interface{}) {
+	if level >= l.minimumLevel {
+		l.Log(level, fmt.Sprintln(args...), err, ctx)
 	}
 }
 
 // Closes the client and flushes the buffer to the Stackdriver Logging
 // service.
-func (sw *StackdriverWriter) Close() error {
-	sw.mu.Lock()
-	defer sw.mu.Unlock()
+func (l *StackdriverWriter) Close() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
-	return sw.Client.Close()
+	return l.Client.Close()
 }
 
 // Deprecated
@@ -101,9 +128,9 @@ var severityMap = map[string]logging.Severity{
 }
 
 // Deprecated: use Log(...)
-func (sw *StackdriverWriter) Write(p []byte) (n int, err error) {
-	sw.mu.Lock()
-	defer sw.mu.Unlock()
+func (l *StackdriverWriter) Write(p []byte) (n int, err error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	logText := string(p[:])
 	logLevel := logging.Default
@@ -116,7 +143,7 @@ func (sw *StackdriverWriter) Write(p []byte) (n int, err error) {
 
 	// Adds an entry to the log buffer.
 	if logLevel > DropLog {
-		sw.Logger.Log(logging.Entry{Severity: logLevel, Payload: logText})
+		l.Logger.Log(logging.Entry{Severity: logLevel, Payload: logText})
 	}
 	return n, nil
 }
