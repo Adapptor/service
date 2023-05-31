@@ -12,26 +12,19 @@ type GoogleConfig struct {
 }
 
 type BaseConfig struct {
-	ServerType ServerType
-	ConfigName string
-	Version    string
-	Google     GoogleConfig
-	SentryDsn  *string
+	ServiceName string
+	ServerType  ServerType
+	ConfigName  string
+	Version     string
+	Google      GoogleConfig
+	SentryDsn   *string
 }
 
 type IBaseConfig interface {
-	GetVersionString() string
-	SetServerType(string)
 	GetServerType() ServerType
+	SetServerType(string)
+	GetVersionString() string
 	IsProductionServer() bool
-}
-
-func (c *BaseConfig) GetVersionString() string {
-	if c == nil {
-		return ""
-	} else {
-		return c.Version + "-" + c.ConfigName
-	}
 }
 
 func (c *BaseConfig) GetServerType() ServerType {
@@ -40,22 +33,6 @@ func (c *BaseConfig) GetServerType() ServerType {
 	} else {
 		return c.ServerType
 	}
-}
-
-func (c *BaseConfig) GetSentryDsn() *string {
-	if c == nil {
-		return nil
-	}
-	return c.SentryDsn
-}
-
-func (c *BaseConfig) IsProductionServer() bool {
-	switch c.ServerType {
-	case Production, LiveTest:
-		return true
-	}
-
-	return false
 }
 
 func (c *BaseConfig) SetServerType(envServerType string) {
@@ -77,6 +54,23 @@ func (c *BaseConfig) SetServerType(envServerType string) {
 	default:
 		c.ServerType = Development
 	}
+}
+
+func (c *BaseConfig) GetVersionString() string {
+	if c == nil {
+		return ""
+	} else {
+		return c.Version + "-" + c.ConfigName
+	}
+}
+
+func (c *BaseConfig) IsProductionServer() bool {
+	switch c.ServerType {
+	case Production, LiveTest:
+		return true
+	}
+
+	return false
 }
 
 func ReadConfig(config interface{}, envServerType string, configPathBuilder func(string) string) error {

@@ -11,9 +11,10 @@ import (
 
 // A rolling file logger
 type FileLogger struct {
-	minimumLevel     LogLevel
-	lumberjackLogger *lumberjack.Logger
-	levelLoggers     map[LogLevel]*log.Logger
+	minimumLevel        LogLevel
+	lumberjackLogger    *lumberjack.Logger
+	levelLoggers        map[LogLevel]*log.Logger
+	userPropertiesToLog *[]UserProperty
 }
 
 func NewFileLogger(filename string, minimumLevel LogLevel, maximumSizeMegabytes int, maximumRetainedLogFilesCount int, maximumRetainedLogFilesAgeDays int) *FileLogger {
@@ -37,8 +38,27 @@ func NewFileLogger(filename string, minimumLevel LogLevel, maximumSizeMegabytes 
 	}
 }
 
+func (l *FileLogger) SetMinimumLevel(level LogLevel) {
+	l.minimumLevel = level
+}
+
+func (l *FileLogger) GetMinimumLevel() LogLevel {
+	return l.minimumLevel
+}
+
+func (l *FileLogger) SetUserPropertiesToLog(userPropertiesToLog *[]UserProperty) {
+	l.userPropertiesToLog = userPropertiesToLog
+}
+
+func (l *FileLogger) GetUserPropertiesToLog() *[]UserProperty { return l.userPropertiesToLog }
+
 func (l *FileLogger) Log(level LogLevel, message string, err error, ctx context.Context) {
 	if level >= l.minimumLevel {
+		userProperties := GetUserPropertiesString(ctx, l.userPropertiesToLog)
+		if userProperties != nil {
+			message = fmt.Sprintf("%s (%s)", message, *userProperties)
+		}
+
 		if err == nil {
 			l.levelLoggers[level].Println(message)
 		} else {
@@ -47,8 +67,23 @@ func (l *FileLogger) Log(level LogLevel, message string, err error, ctx context.
 	}
 }
 
-func (l *FileLogger) SetMinimumLevel(level LogLevel) {
-	l.minimumLevel = level
+func (l *FileLogger) Logf(level LogLevel, err error, ctx context.Context, format string, args ...interface{}) {
+	if level >= l.minimumLevel {
+		l.Log(level, fmt.Sprintf(format, args...), err, ctx)
+	}
+}
+
+func (l *FileLogger) Logln(level LogLevel, err error, ctx context.Context, args ...interface{}) {
+	if level >= l.minimumLevel {
+		message := fmt.Sprintln(args...)
+
+		// Remove the trailing newline from message as Log writes a newline
+		if len(message) > 0 && message[len(message)-1] == '\n' {
+			message = message[:len(message)-1]
+		}
+
+		l.Log(level, message, err, ctx)
+	}
 }
 
 func (l *FileLogger) Close(timeout time.Duration) error {
