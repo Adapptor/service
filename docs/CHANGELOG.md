@@ -1,3 +1,7 @@
+## 2.0.1 31 May 2023
+
+- No code changes; version bump to fix moved v2.0.0 commit
+
 ## 2.0.0 31 May 2023
 
 - Refactored support for multiple log sinks, and added support for Sentry logging
