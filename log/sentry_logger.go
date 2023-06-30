@@ -64,12 +64,11 @@ func (l *SentryLogger) SetUserPropertiesToLog(userPropertiesToLog *[]UserPropert
 
 func (l *SentryLogger) GetUserPropertiesToLog() *[]UserProperty { return l.userPropertiesToLog }
 
+// Log levels below `Warning` are added as breadcrumbs, unless they fall below the configured minimum level.
 func (l *SentryLogger) Log(level LogLevel, message string, err error, ctx context.Context) {
 	if level >= l.minimumLevel {
 		switch level {
-		case Trace, Debug:
-			l.CaptureEvent(message, err, level, ctx)
-		case Info:
+		case Trace, Debug, Info:
 			breadcrumb := sentry.Breadcrumb{
 				Type:     level.String(),
 				Category: "",
@@ -77,8 +76,7 @@ func (l *SentryLogger) Log(level LogLevel, message string, err error, ctx contex
 				Message:  message,
 			}
 			sentry.AddBreadcrumb(&breadcrumb)
-			l.CaptureEvent(message, err, level, ctx)
-		case Warning, Error:
+		case Warning, Error, Fatal:
 			l.CaptureEvent(message, err, level, ctx)
 		}
 	}
@@ -167,6 +165,8 @@ func GetSentryLevel(logLevel LogLevel) sentry.Level {
 		return sentry.LevelWarning
 	case Error:
 		return sentry.LevelError
+	case Fatal:
+		return sentry.LevelFatal
 	}
 	return sentry.LevelInfo
 }

@@ -33,6 +33,7 @@ var logLevelToStackDriverSeverity = map[LogLevel]logging.Severity{
 	Info:    logging.Info,
 	Warning: logging.Warning,
 	Error:   logging.Error,
+	Fatal:   logging.Critical,
 }
 
 func NewStackdriverWriter(configName string, googleLogName string, googleProject string, opts ...option.ClientOption) (*StackdriverWriter, error) {

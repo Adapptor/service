@@ -14,11 +14,13 @@ const (
 	Warning
 	// Error-level logs indicate errors that should be investigated
 	Error
+	// Fatal-level logs indicate errors that terminated the service and should be investigated
+	Fatal
 )
 
 // All log levels
-var LogLevels = [...]LogLevel{Trace, Debug, Info, Warning, Error}
-var LogLevelStrings = [...]string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"}
+var LogLevels = [...]LogLevel{Trace, Debug, Info, Warning, Error, Fatal}
+var LogLevelStrings = [...]string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "FATAL"}
 
 func (l LogLevel) String() string {
 	return LogLevelStrings[l]
@@ -39,6 +41,8 @@ func GetLogLevel(level string) LogLevel {
 		return Warning
 	case "ERROR":
 		return Error
+	case "FATAL":
+		return Fatal
 	default:
 		return Info
 	}
