@@ -1,3 +1,6 @@
+## 2.0.3 16 Apr 2025
+- Fix standard_logger.go file and line number reference on all log messages
+
 ## 2.0.2 30 Jun 2023
 
 - Add Fatal log level
