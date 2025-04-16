@@ -44,25 +44,24 @@ func (l *StandardLogger) SetUserPropertiesToLog(userPropertiesToLog *[]UserPrope
 
 func (l *StandardLogger) GetUserPropertiesToLog() *[]UserProperty { return l.userPropertiesToLog }
 
+// logInternal - all public log functions should call this after checking the minimum level
 func (l *StandardLogger) logInternal(level LogLevel, message string, err error, ctx context.Context) {
-	if level >= l.minimumLevel {
-		// Get the calling function skipping 4 frames so we can print the actual caller
-		if _, file, line, ok := runtime.Caller(4); ok {
-			lastSlash := strings.LastIndex(file, "/")
-			fileName := file[lastSlash+1:]
-			message = fmt.Sprintf("%s:%d: %s", fileName, line, message)
-		}
+	// Get the calling function skipping 4 frames so we can print the actual caller
+	if _, file, line, ok := runtime.Caller(4); ok {
+		lastSlash := strings.LastIndex(file, "/")
+		fileName := file[lastSlash+1:]
+		message = fmt.Sprintf("%s:%d: %s", fileName, line, message)
+	}
 
-		userProperties := GetUserPropertiesString(ctx, l.userPropertiesToLog)
-		if userProperties != nil {
-			message = fmt.Sprintf("%s (%s)", message, *userProperties)
-		}
+	userProperties := GetUserPropertiesString(ctx, l.userPropertiesToLog)
+	if userProperties != nil {
+		message = fmt.Sprintf("%s (%s)", message, *userProperties)
+	}
 
-		if err == nil {
-			l.levelLoggers[level].Println(message)
-		} else {
-			l.levelLoggers[level].Printf("%s, %+v\n", message, err)
-		}
+	if err == nil {
+		l.levelLoggers[level].Println(message)
+	} else {
+		l.levelLoggers[level].Printf("%s, %+v\n", message, err)
 	}
 }
 
