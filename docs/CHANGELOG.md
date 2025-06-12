@@ -1,3 +1,6 @@
+## 2.0.4 13 Jun 2025
+- Add Message when capturing sentry Exception events
+
 ## 2.0.3 16 Apr 2025
 - Fix standard_logger.go file and line number reference on all log messages
 
