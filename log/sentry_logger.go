@@ -125,6 +125,7 @@ func (l *SentryLogger) CaptureEvent(message string, err error, level LogLevel, c
 	if client != nil {
 		if err != nil {
 			event := client.EventFromException(err, sentryLevel)
+			event.Message = message
 			if sentryUser != nil {
 				hub.WithScope(func(s *sentry.Scope) {
 					s.SetUser(*sentryUser)
@@ -147,7 +148,7 @@ func (l *SentryLogger) CaptureEvent(message string, err error, level LogLevel, c
 	} else {
 		log.Printf("%s: failed to find top-level Sentry client: %+v\n", Debug.String(), err)
 		if err != nil {
-			sentry.CaptureException(err)
+			sentry.CaptureException(errors.New(err.Error() + ": " + message))
 		} else {
 			sentry.CaptureMessage(message)
 		}
