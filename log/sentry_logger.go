@@ -119,39 +119,33 @@ func (l *SentryLogger) CaptureEvent(message string, err error, level LogLevel, c
 		}
 	}
 
+	// Client is required
 	client := hub.Client()
-	sentryUser := getUser(ctx, l.userPropertiesToLog)
-
-	if client != nil {
-		if err != nil {
-			event := client.EventFromException(err, sentryLevel)
-			if sentryUser != nil {
-				hub.WithScope(func(s *sentry.Scope) {
-					s.SetUser(*sentryUser)
-					hub.CaptureEvent(event)
-				})
-			} else {
-				hub.CaptureEvent(event)
-			}
-		} else {
-			event := client.EventFromMessage(message, sentryLevel)
-			if sentryUser != nil {
-				hub.WithScope(func(s *sentry.Scope) {
-					s.SetUser(*sentryUser)
-					hub.CaptureEvent(event)
-				})
-			} else {
-				hub.CaptureEvent(event)
-			}
-		}
-	} else {
+	if client == nil {
 		log.Printf("%s: failed to find top-level Sentry client: %+v\n", Debug.String(), err)
-		if err != nil {
-			sentry.CaptureException(err)
-		} else {
-			sentry.CaptureMessage(message)
-		}
+		return
 	}
+
+	// Get event from message or exception
+	var event *sentry.Event
+	if err != nil {
+		event = client.EventFromException(err, sentryLevel)
+		event.Message = message
+	} else {
+		event = client.EventFromMessage(message, sentryLevel)
+	}
+
+	// Send event with user if available
+	sentryUser := getUser(ctx, l.userPropertiesToLog)
+	if sentryUser != nil {
+		hub.WithScope(func(s *sentry.Scope) {
+			s.SetUser(*sentryUser)
+			hub.CaptureEvent(event)
+		})
+	} else {
+		hub.CaptureEvent(event)
+	}
+
 }
 
 // GetSentryLevel Get the Sentry severity level correspodning to the given LogLevel
