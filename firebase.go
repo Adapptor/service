@@ -6,7 +6,7 @@ import (
 	"io/ioutil"
 	_ "time"
 
-	jwt "github.com/golang-jwt/jwt"
+	jwt "github.com/golang-jwt/jwt/v5"
 )
 
 type GoogleCredentials struct {
