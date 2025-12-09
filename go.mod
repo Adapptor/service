@@ -1,7 +1,7 @@
 module github.com/Adapptor/service/v2
 
 require (
-	cloud.google.com/go/logging v1.13.0
+	cloud.google.com/go/logging v1.13.1
 	github.com/getsentry/sentry-go v0.40.0
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	google.golang.org/api v0.257.0
