@@ -1,3 +1,7 @@
+## 2.0.5 9 Dec 2025
+- Upgrade dependencies to latest versions
+- Go version requirement increased to 1.24.0
+
 ## 2.0.4 13 Jun 2025
 - Add Message when capturing sentry Exception events
 
