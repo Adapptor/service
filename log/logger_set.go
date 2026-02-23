@@ -22,6 +22,18 @@ func NewLoggerSet(minimumLevel LogLevel) *LoggerSet {
 	return logSet
 }
 
+// NewLoggerSetWith creates a LoggerSet with the given minimum level and loggers (e.g. a file logger only).
+// Use this when you need a separate log stream for a subset of the app (e.g. a dedicated log file per component).
+func NewLoggerSetWith(minimumLevel LogLevel, loggers ...Logger) *LoggerSet {
+	logSet := &LoggerSet{minimumLevel: minimumLevel}
+	for _, l := range loggers {
+		if l != nil {
+			logSet.loggers = append(logSet.loggers, l)
+		}
+	}
+	return logSet
+}
+
 func (l *LoggerSet) AddLogger(logger Logger) {
 	if logger != nil {
 		l.loggers = append(l.loggers, logger)
